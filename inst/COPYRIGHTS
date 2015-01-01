@@ -1,0 +1,13 @@
+The package dropR includes other open source software components. The following is a list of these components:
+
+** NVD3
+
+NVD3 is created by Partners Inc. NVD3 is currently under Apache License, Version 2.0.
+A copy of the license information can be found at http://www.apache.org/licenses/LICENSE-2.0.
+
+** D3
+
+The underlying D3 library for reusable graphics was created by Michael Bostock. 
+
+Further information on the licenses of both components can be found at https://github.com/novus/nvd3/blob/master/LICENSE.md.
+Please read the licenses information carefully before using, copying and redistributing dropR or any of its components.
