@@ -1,0 +1,13 @@
+name: dropR
+title: dropR
+username: iscience-kn
+account: iscience-kn
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12056803
+bundleId: 8731746
+url: https://iscience-kn.shinyapps.io/dropR/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: curve_plot.pdf|curve_plot.png|curve_plot.svg|kpm_plot.pdf

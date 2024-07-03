@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Interactive Dropout Analysis with dropR</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Interactive Dropout Analysis with
+dropR</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(dropR)</span></code></pre></div>
+<p>Though the low-hurdle of the online version with its graphical user
+interface (GUI) is appealing for many use cases, there are good reasons
+to directly use dropR’s backend in the R console without the GUI: Some
+data.frames may need extra formatting or additional cleaning before they
+suit the dropR input format or you may want adapt and extend your
+analysis in a way the GUI does not allow to. If you are writing a report
+directly in RMarkdown, you can also make use of automatically reporting
+your results in your document or embedding a dropout plot from
+dropR.</p>
+<div id="dropout-analysis-walkthrough" class="section level2">
+<h2>Dropout Analysis Walkthrough</h2>
+<p>This section describes how to extract information on dropout from the
+demo data set without using the dropR shiny UI. First, let’s make sure
+the demo data set is loaded and available. The data set should look like
+this:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(dropR)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co"># Use demo dataset in a new data frame to be edited</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>df <span class="ot">&lt;-</span> dropRdemo</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+obs_id
+</th>
+<th style="text-align:right;">
+experimental_condition
+</th>
+<th style="text-align:right;">
+vi_1
+</th>
+<th style="text-align:right;">
+vi_2
+</th>
+<th style="text-align:right;">
+vi_3
+</th>
+<th style="text-align:left;">
+…
+</th>
+<th style="text-align:right;">
+vi_51
+</th>
+<th style="text-align:right;">
+vi_52
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+7a9f33
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+e11f94
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+e72a50
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+f90f5f
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+20bc72
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+<div id="basic-dropout-statistics" class="section level3">
+<h3>Basic Dropout Statistics</h3>
+<p>Now, let’s extract dropout, i.e., information on when a participant
+dropped out of the questionnaire and never returned. For this, we need
+to identify the last question that someone filled out before only
+missing data is present a.k.a <code>NA</code>s. We will use the
+<code>add_dropout_idx</code> function on the demo data set and add the
+position of all question variables in the data. In the demo data,
+questions are easily identified by their prefix <code>vi_</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>qs <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">grepl</span>(<span class="st">&quot;vi_&quot;</span>, <span class="fu">names</span>(df)))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># add numeric drop out position to original dataset</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">add_dropout_idx</span>(df, <span class="at">q_pos =</span> qs)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(df[,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,(<span class="fu">ncol</span>(df)<span class="sc">-</span><span class="dv">1</span>)<span class="sc">:</span><span class="fu">ncol</span>(df))]))</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">obs_id</th>
+<th align="right">experimental_condition</th>
+<th align="right">vi_1</th>
+<th align="right">vi_52</th>
+<th align="right">do_idx</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">7a9f33</td>
+<td align="right">11</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">e11f94</td>
+<td align="right">22</td>
+<td align="right">1</td>
+<td align="right">NA</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">e72a50</td>
+<td align="right">22</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">f90f5f</td>
+<td align="right">11</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">20bc72</td>
+<td align="right">12</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">76b97a</td>
+<td align="right">22</td>
+<td align="right">1</td>
+<td align="right">NA</td>
+<td align="right">27</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>experimental_condition</code> column indicates belonging to
+a sub sample, each of which was treated differently. For example, groups
+receive a different sequence of questions or different wording.</p>
+<p>Next we’ll compute a table containing basic dropout statistics for
+each item using the <code>compute_stats</code> function.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>stats <span class="ot">&lt;-</span> <span class="fu">compute_stats</span>(df,</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                       <span class="at">by_cond =</span> <span class="st">&quot;experimental_condition&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>                       <span class="at">no_of_vars =</span> <span class="fu">length</span>(qs))</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(stats))</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">q_idx</th>
+<th align="left">condition</th>
+<th align="right">cs</th>
+<th align="right">N</th>
+<th align="right">remain</th>
+<th align="right">pct_remain</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">total</td>
+<td align="right">11</td>
+<td align="right">246</td>
+<td align="right">235</td>
+<td align="right">0.9552846</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">total</td>
+<td align="right">14</td>
+<td align="right">246</td>
+<td align="right">232</td>
+<td align="right">0.9430894</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="left">total</td>
+<td align="right">23</td>
+<td align="right">246</td>
+<td align="right">223</td>
+<td align="right">0.9065041</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="left">total</td>
+<td align="right">26</td>
+<td align="right">246</td>
+<td align="right">220</td>
+<td align="right">0.8943089</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="left">total</td>
+<td align="right">27</td>
+<td align="right">246</td>
+<td align="right">219</td>
+<td align="right">0.8902439</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="left">total</td>
+<td align="right">31</td>
+<td align="right">246</td>
+<td align="right">215</td>
+<td align="right">0.8739837</td>
+</tr>
+</tbody>
+</table>
+<p>Out of 246 participants in total in the demo sample, 235 participants
+remain in the survey at the first question, accounting for 95.53 percent
+of the sample. At the last question of the experiment, 61.79% of all
+participants “survived”. The <code>cs</code> column shows the absolute
+cumulative dropout count.</p>
+<p>The stats table shows the dropout statistics for the total sample
+first and if defined in the function <code>by_cond</code>, it also shows
+the same statistics for each experimental condition separately. This
+table is the basis for many further analyses and can easily be
+reported.</p>
+</div>
+<div id="plotting-dropout-curves" class="section level3">
+<h3>Plotting Dropout Curves</h3>
+<p>Based on the above statistics table, dropR plots dropout curves very
+conveniently.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">plot_do_curve</span>(stats)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>By default, the function to plot dropout curves chooses a color
+palette which is designed to de distinguishable for color blind
+individuals. Adhering to some journal guidelines, you may also choose a
+gray color palette, distinguishing the lines by line type and gray
+value.</p>
+</div>
+</div>
+<div id="full-workflow-example-using-tidyverse" class="section level2">
+<h2>Full Workflow Example using <code>tidyverse</code></h2>
+<p>To wrap up this Walkthrough, we want to show you a full analysis
+example in just six lines of code using <code>tidyverse</code> workflow
+with functions from <code>magrittr</code> and <code>ggplot2</code>.
+Specifically, it is very easy to <code>pipe</code> several dropR
+functions to create the full analysis as well as plotting all at once.
+Moreover, it is easy to customize the plot further using common
+<code>ggplot2</code> functions as shown. Assuming we want to create a
+similar analysis as before with a customized plot output, we can achieve
+this like so:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>dropRdemo <span class="sc">%&gt;%</span> </span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">add_dropout_idx</span>(<span class="dv">3</span><span class="sc">:</span><span class="dv">54</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">compute_stats</span>(<span class="at">by_cond =</span> <span class="st">&quot;experimental_condition&quot;</span>, <span class="at">no_of_vars =</span> <span class="dv">52</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="fu">plot_do_curve</span>(<span class="at">linetypes =</span> F, <span class="at">full_scale =</span> F, <span class="at">show_confbands =</span> T) <span class="sc">+</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Dropout Plot with tidyverse Workflow&quot;</span>) <span class="sc">+</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="fu">scale_color_brewer</span>(<span class="at">palette =</span> <span class="st">&quot;Dark2&quot;</span>) <span class="sc">+</span> <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">&quot;Dark2&quot;</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; Scale for colour is already present.</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; Adding another scale for colour, which will replace the existing scale.</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; Scale for fill is already present.</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; Adding another scale for fill, which will replace the existing scale.</span></span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAACKFBMVEUAAAAAADoAAGYAOjoAOmYAOpAAZpAAZrYbnnczMzM6AAA6ADo6AGY6OgA6Ojo6OmY6Zjo6ZmY6ZpA6ZrY6kLY6kNtNTU1NTW5NTY5NbqtNjshapCxifGhjhFlmAABmADpmOgBmOjpmOmZmOpBmZjpmZmZmZpBmkJBmkLZmkNtmph5mtrZmtttmtv9pgGRqd3ZuTU1uTW5uTY5ubm5uq+RvmSVwkzx1cLN4mxl7kjCBZ6OCg0eCiDWFbpeIcXiMYquOTU2OyP+QOgCQZI6QZgCQZjqQZmaQZpCQkGaQkLaQtpCQtraQttuQ27aQ29uQ2/+ZYJSjwKqobD2rbk2rjk2r5P+sWmqsp6CtyrSumoquuJiv0bCzUHK0oJC0r6i1tKS2VGG2ZgC2Zjq2kDq2kGa2kJC2sqy2tma2tpC2tra2ttu225C229u22/+2/7a2/9u2//+4pIm5XUW7aRS83ry9R329yJi/v66/09rAl6XArZHAvbbEXCzGO4fHscrIjk3In63I/8jI///JuMXKQHLK1sbNQnTNpKTQvLrQvrPQ3cLR7OTT0LfT0uDVn7DVxdLXr67Yt5/ZXwLa1KnbkDrbkGbbtmbbtpDbtrbb25Db27bb29vb2//b/7bb/9vb///cy8Ddycffqbvg7dLj4vDkq27kvdzk///nKYrr6+v0u7/338z61Oj/tmb/yI7/25D/27b/29v/5Kv//7b//8j//9v//+T///90G2YFAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAY+0lEQVR4nO2dj3scxXnHV7aMyqWGYkcKpK5qWpyCAoGmJtRxFIxc06alxTWNC64FOZy2McUtNRKqJaW+UFEMpvhSBHYhQRJnQYJ9koJ97L/Xeef3zM7uzOzO3smn/T4P5m52b3bmo3femd2ZeTeKK2Uq6nUBNrsqQBZVgCyqAFlUAbKoAmRRBciiCpBFxQEtRlh3nvH/6fofvKJmMvhUHHcmdiwZz5GFT4JD2tlaWmdiyL9UXPWBpwMCiqKH/H+6TQMEmWhVFufIwifBIR2QmlYMUBuqFAAQrkHn/RrwzvNT6dMH0Y4lJ0D8kAmQUDFAN0aHwgEC3sNQoMVo25l4Yy9qLmfgEsPtWjSIybE0UiV0ZmcCWcywmkl92yvkOD1bnEOSF+EL/u2Oj/Eh9OGXe6OBB0g2HZaGTv0AXfhlBAjbAZSEXAPXGnK/E5cFl7dzJIoGHmSF5M4C5xMOEGTXmdheQ0aAoCAhi7oxeleNfIp5mhMgdrZ0ziLkUo9Q9dZrwxKgwb2ifUuAcKMd3DtEiMTtgafXaw/FpN2si7JAeXFOOAt+QJQqHCBSOfIXjh6EP/aOpRuj0dBS5xSqlUjjgIxNbIiCZmeLc6B+KD/0tQ3guA+Ck96PhqSM4OCN0YGn4o0JSK9DDnV2YVxKMJfLNVyqYch5N/L4+Cs7IC4ZGhB8WSdXQJ3AjVHsIdARkWYGRH00tTBxtjgHLGH9K3+BklhlCQw4TqxEBoSsLKYlAZtBLYzYIM4FH4NTWXm3/9HLBMiwUiP4VWhAUHliy/CHpgVfZPbN//gpgO6kPkqcLZ2DuLS3/evoQ1BsrRcTzpilEc+D06EQkBOuP6S3+V+Duvg6fNt1RjogLhnaB+UFJDqfVEDoWx05riE46AMI/nJ1ctaOJWhvCUDxZfBj215JAGpveyV0L0YAqU0MDFlqNHXeKDIAJZsYyvabE8Px4o5TjEsWINJaqIOOvjlK2s7AX48O8T9grAxKP/yz6CFxQFwy4DhIKq7kpL+qO2lk0A/A1yHaMZkAyU6an4O6nK88jexo5xAbKMp9IsuIpiEn/SC9CvrfHSST9do+MCzki9GIfWOCuYQ2KmTcOQUGxQ7wS94VdiRN/yJSN7+9ho1XSiMWDh0w/FTr5ikg6WxxDvqIzkI9MbvQIh/zSIBYmrgK/SHOmnygTWlY/EFB7Efigji7QIAGdp2Jhcmu84HiEKoqPsTT4vh9lPQxdp970SjACEicLc5BxR+KabeFT4JDH2uARBryK4P/RtLXWce9SIcDkPv2B3l58UBx95J0gKkdAFCWRPfbU7Vz3CcybQVAG3vV+zUv9T8g1FFITsVb/Q8IueDdBX5ePVG0qAJkUQXIogqQRRUgiypAFhUG1O+EK0AWVYAsqgBZVAGyqAJkUQXIogqQRRUgiwIBarUKl2STKhigfiWkAvrNR0y/EIlffPt1+N/ayMjXfqh8kDJY3hqA4PEt1yBdJnPz0N0AaA1Bgf/EBzmDLQKo8+R9UXTnvnujaOB3dtIZamQvAOjLZ/ajL+e/Lj4oGWwRQPF6jUykwbIZMsm2NrJ/DQB98cgT6Nvq3a/zD0oGM1sDUGeCToQDKAoLMcKA/viH5CP/oGQw07deWvNBdAYYPvAvGAbxOuhf/gH9eztS9GvQ3//t22//uifqMiBuQU6ARAbPP//GVrCguB4RHwRrJduRRxObfP7ZLQEI9fMDd+27rxaBAbEJWxcnvVUAxRtH8Bho1xJitYvO+K85dPOTk1sEENJHVz5SE9YcBooAqD8JOdyLUX+zyu4wVg23GlsHUCd5L+aSweTkZJ92YyqgzhF2J5a+hcSYwWTfmpDezUeD+7C+4boma0sBQl2792I+ksHBg1sEkHPL0jI4ePDgiS0AqDORE9Cvjk8e/M4bb7xxVVaoIvZWqg9a9F/uSDI4fjwJqD8IqYA2JqJdp7Fe8nPSWwSQ9MjVs5sHQM/qgPqCkPbIdR+TZzePAB08kSAUurC9UKBpn+PgpRGh/jOhYIC+3++AOldeWupcOc3k6aSPgRM6ceLZZ/uOEAdEHkPnddIU0IkT/9G3gDpPfmMpv5OeZIDm+s2EAvkgDAgTqgAZM0CAvv8dUxu75TmFemAG3djBSaT//PTTviIU7IEZDBUBUONTI6HAxe6egj0wA0BAqGE2ocDF7p4CPTCbVNpYPxEK9MCs0cCAvo/03e8+/vhjoF4CumhUnpzCPDBDgKYBEBA6fPjo0aPj4wlCXUVUEqD8D8zmEKBjk8QJNT4BrVztJaGyAOV+YKYAIoSuXu0/QPnvxTCgbzFADbMJ5SlfTpXlg/Lci+FlTBfOIUDHkBN67rnnziG9++67Fy5cGP8fVd1bQFVWE8udwUpDNSEwopWV8fFemZAFUFsezchfbozq45xAgK593iAmxAE1EKCVcd0NdYtSNiAFQ/oXrEAPzK5da04fnzyGB9MMEJIJUFcIlQCo2AOzGAMCQsdkQEc3JSCIlkijKQ2zL3USISrLggo9MENtDABNSoAaGFCP2tjFi7+VkGZBJHrgEPlSH2JRBEvyQXFMAMFQSAL0iQlQNwjZAXUmYEyMI/UhUL//NItkWSKgaQLoWyqgx5L3ZUUv6SC7DyIR79C/jEk7ilwAkf0+V37y554+CAAdPw7PPI5PN7g+GX/MgChPjT3lCujGKAG0iLzuvzhY0I29eZ10HC9wQBKhFcpEtaG81XaXpwXhLy5NDPnynVG0nQUPdhHPoNloEC/9sERo8wJSfFAbBzK0N7HORPQQbGgRi8jt4hl8jgFhJ2QC1F1CNkDDci82zCIND9sA4QdmdRwO1jluXBLQsbPT02fPqoC6bULZgMiWizYNKQlfFiGqZZ2YU0r9QBjQIgbp74OuC0BnESCK6GpvTMgCyEPJJ4oQ7zIXoGazOTs7+73v/d6e5sLCwvw8MSGqcbUny1NUH5UECFnbg3QzXSFAmNBCUwa0oj0eylNWD5UFCIOpRwNR5Bz/MAlods8ejGi+DwHFG3+Iw8RHu5xjewpAn2NAiFATCEEjQ25oDokS6mobCybjrUYnVwaUEALUbAKghXnkqOcEoW6a0DWj8uQUMHbHdUSIAcKEms2zZ+cEoavKPUfR62arPEA5Fy+AFEBNMKEFBmiOtbFuzSiWBajIvRgCdP3zz1VAC3gwxBCZhowlESoLUB0CL+R6YBZjQNev/xy6MdLG9jSbC+SmQyF0KwPKv3gBhAEtAyBKSAU0xwF1oY2VBijv3DwIA7ouAQJH3ZAJda+N2QGt//Yr2gdb/UB1/1dg6YB+DoAYIQ1Q99qYFZASZMKtfuTs23yjv+vd4HuPPkoBIaGxEPkgE9oMgNqsG2rb+iOtfuu16A6sO/17MaLWo4++xglxQE1259olQhZA7Wi4Td+wQT841o+87yNnN0/Ukk1IA4TvzK52Y9nHtWv/m5DqgzgXH0DoLuy21IHi6sjICESlMIbokvQeNiEzoDlCqHwTKglQlsNahYALQMgYeUHSe38q2pgAJBHqhgnZe7GcFpR68pfPQLSO1Ngdklpjvzs1NTPDTYiKd2ddMaGSAGW844UDMkd/kYQBTU1d0gBRRHQ4lJxxdaq3s8oC9JsfD+x6yeyDWBMzxw+S1BobA0BTFBBrYvPzTT7VASuHVlbKJFQSoMzVHdQ3m0N0SXp7bOztf0D6rzeRFhZgQA2f5uffPEf17oUL4+MXLlwIsvysq4CyVnecRzbzxSP7Y3OILlljY60Wa2ME0B5sQcKE5pAFlWtCZTWxdIkIVLYmhgEhRBcvXbpEmhgjxAERQuPa0yHHkjjJDshVroC44VidNAXUAkCXiA/ChObnRX8/NycAGVfIuCiruOUB6vwjal2d5AI8wgUZjrWbZ4CmLl68eAk/NSN39hqhldTnQ5sa0Ae1CAd4S848Mx9kHShCN8YAXVyQCO2RAJH1Q5+CHn/cvPtlUwJqRwN/Sebnk4sXzqNbDTAeY4guBVCLtjEk0dcDoHkFUIMBykkoT3X9lVjdgW83eJhSzwywWtSEOKAmGQwlTKjxaSETyipVOKSJezEMKM/cPFeLmpAEiLrqhAlhHT0KGxcSvX5/AyKNrDUFU62z1IS4F2pIYoByEMoqVUmAyOIpvMKjUBMThGYIIeKrFxImJBG6JQDBy4N/iQBdruVYYcaVBCQTmtcAYUKkrRGnvakBxS/SWzH3l1saRpoGQMwXAaF5jVCDNjIKyJlQVqlKAxRfvhfhucN5CWc6oDEZECdEO/uGpsO3DqAQGUhtbGpWiN67JhsZAnT4qH8byyqV/RdkOgy/BzvTnaQBupLfSStOaFYj1NxjaGOY0FFfQlmlsv6C9NM4Rv1ipkOR67dx+jR9VcTG3gLdPAbECM0wMRNaIA8Z2SJPCVE3AdHpMLKafDGrsqJ+Heyg4a2/nVMFpn3SAM0QR8QInT2rITp8GHdowQA9lpD0C3U6rJ01nyzqtxgN3P9jeNs9vHN91xlHPj6ApM4M2pgO6HCDISodUKw8J6s7WRDch+E31q/XosGnXPFYAS0jKSZEO7OmDgibECUUApDtFwJQO9NLSzsOB/CeqYGd0W6f+XkHQBSR6O+JCSUAER2lkS2syiqVB6B29qBP2ZJJov77LfBIA0QJLZsJSY8YdUCIUDcBZduPCZDnEioLILmZySYkaXpa3kBFNpTTdbHlNzFrMI4EIN8lVKaBlAbIQmh6WkPEAWUTyiqVK6BFqz2UAig2AAJE8l1Hsynf26uA3AhllcoR0HrNelNeJiAmTkgZVOOpsnk6aBQbqNxNKKtUjoAWya250zgI9WJ37dt3Xw3+zbfKVSM0JhFSTIgTUgBNywPHFRdCxQC5SgIUySoyko6Zn25xd50gRJ9S4/kg2saMgFbSWWWVqgRAUliKHKEpElIJ0f/rgCijJgbEBICkHR7phLJKVQKgvHIClEEIECmAANGckVCA6garX+EMWioh1p3NzMzogIDQww83+M0ZtiEXQkVLXqh+xTPQTIg+YpQICUgACBAlAOmI3AFdNypk/Qpn0EoSIv29BEiYkURoWiGkcLo1AaUsbHo7obEx9M9bb731wr8LvcmFCJ07d/bsuXPnpqfRP/+k6QKWYcWVuVSbCVDagZYuyVXze1fhiYgRwWBI6sh0I7olLSjtgAEQm281EmoAoYfxoLGhixHqNSAI00U+Xf5BwXGQAVBrbEx9zKgBajBE6YR6Dch5C0xaBrLMgAiiGe35kHgwlA1oJRAgebbHeTvU+9Kd2H1FbzViEyDhiPQHaNKTMzMgkwlllSobkDzb474dar0m34vtduST4cQyALWWDYD4UxC++lxKfQfkvkYsG5A02+OzHerK6Z/UBv4K34m97Lzp2R8Qf0w0NfUaCFddJiQAJQm5lur69V8lpPsgmO3x3A4FkfBci2DMQFFWGyOEBCCZ0B6+PF8m9A61IbcVhy6A6GxPoHXSOTJIA8Q7s9ZrQvLYWiKUbGSugKy9GHta7wmoQGABXVmACCIDoFmLCUnKKpUdEJ/t8QKU+60ImcpqaFNMM9JSInkLDNerQQGJ2R4vQLnfipCtLE8kAAlCYoeHROhVnVDWFW2ApNkez90+BQILZMjU0HRCtFN7TQAiiHgT0wllXdACSJ7tCbUl0ymDNKW4Ih0R6dXEsmGF0DvvBAOkzPYE2pLplkGqMjszjkgyoSZFlGFCWdfLBqTM9nj5oNxvRXCRgydigOjafDrtQTmFA5S/frnfiuAkAyHxURB6R+rH9ghBG3u1x4AKBNx2UZYJUUS6CTUFp80AqEDAbRclAckmJAiRoZAszMgHUDiVeKuRlMWEWqyVwXDoRz9KEFIG1s1m0ZK7qceANEKYEb/vECwIIQ9Ahiu18r3N3HVLpnMGFtkA4Xv8BKCmyYR8LhMMUPqWTMcMrLICQoQS02Zs02LPAWVtyXTKwK4EIIMJJQHRHWe9BhRmS6ZFSUKyMCG2tFoGtEAASfK4SChAYXYcWpQNiIRtSBIiI8ctAQjLXIEW9Ukc0CWdkDSy3uOfPz/Mp308d/uE2ZLppExAYgPDpVIA8Wkfz90+2Vsyv3hkZATHW7CE6HJTOqAxBRDXT3/a1OSfPTvKp328dvtgpW/JXLvns/jmoa87RF5wUhogYkJ8f8eMBOiSF6CEbxvTfRDf5OO424cobUsmCdmx6hK7w00WQGIPDNXJk6EB8U0+brt9LCJRceLYHqLLUdltbDmB6OTJmUs+gLKaGBZ/bO+428eitbt/dgjH7rDHD3KXxYR0QkEBiWkfx90+kjofJdNWRxASiPRmDdHlo+QyNLoQDVaigV4QOnnyhTcVZa0wswJytJ8EILxZ9cZo8tU+q1+jhmMP0eUjSxtbliwp0cY881UA8WfL7rt9sNo1eJQI04f69A9xOsgBhWxi5ooQl3rggMYIAZqZDQSIT/t47PYBoXElna9ODBQJEUQnlJOmSgUkT3pgezqJpDxF88y2JY+DhrUP6XJdYXbzkHOILi+Za0JBic8I0H+HA8SnfXx2+4DIvtWYvqFF1SoaKGI4YQaKlqoYAC2rG4N78zyoTpoWamqGobRriC4/ZQFKEuo1IJj32X7HTo9ZnxIBJUxoWd5836NHrp0XYaXigMfG8MJP/d0AtfQ9i7OzRS/sJkP9DMNEvwz85ANIGVoXvbCburR4wVk2E+otoNKWv3hIJZQwoeUeW1CR92qEUaoJLesKfOEU6WsUB0pc3eEmjRDXgU0AqOTVHW7SHTUHpN+dhb6wWd1c3eGmtD5teRMA6kkGCaURqgBRpQM6sAkAlb26w0GubSz4hY3q+uoOB6UDOtBrQF1Y3eGgDEAHeguoK6s7nGWCJI8cS7uwoh4tXnCSkVAFSMhiQuVdWFavVnc4yUyIqcQLS3Jf3eGUQVgZfXVPAYUJuB1MRkC9bGJxmIDb4bQJAXU/gyxVgGzaVIA2jvjNZyQyKEGbCRA8LdsZRYMhAk2G0yYChGdV+fKFHBmUrR4Dog/sPYaINIMiC6gKLbfKWkAVThwQvbvwnvnpngXpJtSdi95KgOIKkEUVIKsqQDb1EhCOX8bCmPVuXixbvQQUMp50eerdOChsPOnS1LuRdK8y8FUFaHOpAmRRBciiCpBFFSCLKkAWVYAsqgBZVAGyqDggpNsjk8ypQZKl1BAQMusXIpPbPVKDJKecXIYqQBZVgCzqdx9bWBUgiypAFlWALKoAWVQckBqQiuiLb7+eOPTlM2xfufoLvss8kdH5ez7Tkm8eQnngOFimq5aiwoC0OANYNw/hyBXKoS+fQZ9WRxIhrCDIBf6WyGhtBAApyTyKkemq5agoID1SBQj9dQGQeojH/FCTbx7aH+OwO4mMkLWwYA88mcVUMV21JBUFpMc6iYHPflwRwyH4qxuSAVAiefWev0OA1ORVnXbB0juoMCAtWg4RAWQ4dP7u1w3JEJxIT0bfwQepyef/ZMQYBqtEFQWkx1uiqVB0wyFkXMnkNVxnLRkaEQBSkm8eAq903pBHeeoqoDXmo7VffPnMPZ9pyRBsJgGIZ34LAfJpYmu4lzf9AlyTkoy/JZsYOZYMg1WiSnDSMQOkHVoloyDTL6DOqjceIXrCcLYhDFaJKqObp4C0Q6sjTxh+QapqiGwVEwtSkrNOLkulDBSp8atjvEf2G39xPiWyFT2kJmMk540nl6XitxqrhkE/9Q7yIdpo4Lv6i/PQkowZkVsNJTn95LJU3axaVAGyqAJkUQXIogqQRRUgiypAFhUEtHGkFkXb73feQbXxg9gewhkWbRs3Za3X3Hdjh1IxQDRYbGa0WFmkhlsH0GI0AMbz4RFXQq417BNA6zXGZdFxn+IWAyTCnZP9nHXMi9bi8l7knEiAgg92RsTUcIscZk0MkskZ9YG/ORJFg0/xnAkgOXnj3ija/X9a1mT/KAT1KVALiwoAkgObYlYyIOqddouPqC4yIPxWHZIMb1BWPRkFJJLXIQZvdJeeNQ4Elf3qmaIqAEhuB/jdCxKgdjT4MrxCAP1tSRTvjQlST+6kkf9CpkHCqNThsxzEmgFiyeif3UsQP0zNGufd9ojtnEOBAOGaS4DIR3TKEFTiKeU0DIhFRcWxrkhEsHYSEEumEbEWIzVrTCvH+6l9VI4FsfaDWxC0lO334xfYC0Dsx7idKs5LZC2SKbtE1rgZluu4C/kg4TQ0HyR258FbKEjMHQjpYAKEfuQACLv1RNY4LJ13fF4vBejFTv8i0Yvpgak/fHIn/ksHsSA5a8DlGQnBU8XHQaiMu0/hCtSxNyCOIuEY1qHOaT7IBkjxQXLW9eirHiEN8yjASBqaEC0/+t9l2tXA2286p7CDHTyDDn4QYUC3LZl6MRsgBGLIkHXcxlExS21kYe7FcJmVwcqLwk9owxnTOMgKyJz1DdyDeYcb8VKQu/ld/1yDcUq8vjcaeIDWEw+fSTQi+BjtAjOK3wcjMIykbYBwcKPdetZ13LL9I9b4KNDzoM6LpTqCHqp6YGZRBciiCpBFFSCLKkAWVYAsqgBZVAGyqAJkUQXIov8HOF35TEg9jiUAAAAASUVORK5CYII=" /><!-- --></p>
+<p>Next, you may want to run more statistical dropout analyses using
+<code>dropR</code>. You can find an in-depth tutorial in our <a href="https://iscience-kn.github.io/dropR/articles/tests.html">test
+article</a>.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
