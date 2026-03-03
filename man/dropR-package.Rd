@@ -6,7 +6,7 @@
 \alias{dropR-package}
 \title{dropR: Dropout Analysis by Condition}
 \description{
-Analysis and visualization of dropout between conditions in surveys and (online) experiments. Features include computation of dropout statistics, comparing dropout between conditions (e.g. Chi square), analyzing survival (e.g. Kaplan-Meier estimation), comparing conditions with the most different rates of dropout (Kolmogorov-Smirnov) and visualizing the result of each in designated plotting functions. Sources: Andrea Frick, Marie-Terese Baechtiger & Ulf-Dietrich Reips (2001) \url{https://www.researchgate.net/publication/223956222_Financial_incentives_personal_information_and_drop-out_in_online_studies}; Ulf-Dietrich Reips (2002) "Standards for Internet-Based Experimenting" \doi{10.1027//1618-3169.49.4.243}.
+Analysis and visualization of dropout between conditions in surveys and (online) experiments. Features include computation of dropout statistics, comparing dropout between conditions (e.g. Chi squared), analyzing survival (e.g. Kaplan-Meier estimation), comparing conditions with the most different rates of dropout (Kolmogorov-Smirnov) and visualizing the result of each in designated plotting functions. Article published in _Behavior Research Methods_ on 'dropR' by the authors: Dropout analysis: A method for data from Internet-based research and 'dropR', an R-based web app and package to analyze and visualize dropout. (2025) \doi{10.3758/s13428-025-02730-2}. Sources: Andrea Frick, Marie-Terese Baechtiger & Ulf-Dietrich Reips (2001) \doi{10.5167/uzh-19758}; Ulf-Dietrich Reips (2002) \doi{10.1027//1618-3169.49.4.243}.
 }
 \seealso{
 Useful links:
@@ -17,16 +17,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Annika Tave Overlander \email{annika-tave.overlander@uni.kn}
+\strong{Maintainer}: Annika Tave Overlander \email{annika-tave.overlander@uni.kn} (\href{https://orcid.org/0009-0006-8373-4086}{ORCID})
 
 Authors:
 \itemize{
   \item Matthias Bannert \email{bannert@kof.ethz.ch}
-}
-
-Other contributors:
-\itemize{
-  \item Ulf-Dietrich Reips [contributor]
+  \item Ulf-Dietrich Reips (\href{https://orcid.org/0000-0002-1566-4745}{ORCID})
 }
 
 }

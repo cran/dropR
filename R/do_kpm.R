@@ -33,8 +33,10 @@ do_kpm <- function(df,
     fit1 <- survfit(surv~1, data = df)
     steps <- get_steps_by_cond(fit1, "total")
     steps
-  } else {
-    by_cond <- split(df, factor(df[ ,condition_col]))
+  } else if (condition_col %in% names(df)){
+    df[[condition_col]] <- as.factor(df[[condition_col]])
+    
+    by_cond <- split(df, condition_col)
     by_cond_fit <- lapply(by_cond,
                           function(x) survfit(surv~1, data = x))
     
@@ -56,7 +58,11 @@ do_kpm <- function(df,
     })
     
     steps <- do.call("rbind", by_cond_steps)
+  } else{
+    return("Please make sure that the experimental_condition matches the variable name in your df exactly!")
   }
+  
+  
   out <- list()
   out$steps <- steps
   out$d <- df
@@ -126,7 +132,11 @@ plot_do_kpm <- function(kds,
           axis.line = element_line(colour = "black"),
           legend.text = element_text(size = 12),
           axis.text = element_text(size = 12),
-          axis.title = element_text(size = 16))
+          axis.title = element_text(size = 16)) +
+    scale_x_continuous(breaks = function(x) {
+      pretty(x)[pretty(x) %% 1 == 0]
+    })
+  
   if(kpm_ci){
     k <- k + geom_ribbon(aes(ymin = lwr*100,
                              ymax = uppr*100),
@@ -145,7 +155,7 @@ plot_do_kpm <- function(kds,
   
   k <- k + guides(color = guide_legend(title = NULL),
                   fill = guide_legend(title = NULL)) +
-    xlab("Question Index") + 
+    xlab("Item Index") + 
     ylab("Survival Probability in %")
   
   k

@@ -36,10 +36,17 @@ plot_do_curve(stats)
 ## ----tidyflow, warning=F------------------------------------------------------
 library(ggplot2)
 
-dropRdemo %>% 
-  add_dropout_idx(3:54) %>% 
-  compute_stats(by_cond = "experimental_condition", no_of_vars = 52) %>% 
+dropRdemo |>  
+  add_dropout_idx(3:54) |> 
+  compute_stats(by_cond = "experimental_condition", no_of_vars = 52) |>  
   plot_do_curve(linetypes = F, full_scale = F, show_confbands = T) +
   labs(title = "Dropout Plot with tidyverse Workflow") +
   scale_color_brewer(palette = "Dark2") + scale_fill_brewer(palette = "Dark2")
+
+## -----------------------------------------------------------------------------
+do_print(stats)
+
+## -----------------------------------------------------------------------------
+chi <- do_chisq(stats, p_sim = T) # automatically compares all conditions up to the last item
+do_print(chi)
 

@@ -35,22 +35,23 @@ tabHome <- tabItem(tabName = "home",
                        experiments for", strong("differences in dropout between conditions."), 
                          class="slimtext"),
                        p("Currently, dropR supports visual 
-                         inspection of dropout, Odds ratio by item, Chi 
+                         inspection of dropout, odds ratio by item, Chi 
                          Square tests of differences at any particular 
                          item (e.g. test for overall dropout difference), 
-                         Kaplan-Maier survival estimation, Rho family 
-                         tests.", class="slimtext"),
-                       p(strong("dropR follows a simple step-by-step process which starts in the Upload tab."), br(),
+                         Kaplan-Meier survival estimation, Rho family 
+                         tests and Kolmogorov-Smirnov analyses.", class="slimtext"),
+                       p(strong("dropR follows a simple step-by-step process that starts in the Upload tab."), br(),
                          "1. Upload your data under 'Upload your 
-                         data' or choose our demo file.", br(),
+                         data' or choose our demo data.", br(),
                          "2. Specify some datafile characteristics, such as column delimiter or NA coding.", br(),
-                         "3. Identify the experimental condition variable, i.e. 'experimental_condition' in demo data 
-                         or something similar in your data and select all experimental variables for which to analyze dropout.", br(),
-                         "Make sure to click 'update data!' to get started on analyses 
+                         "3. Identify the experimental condition variable (e.g., 'experimental_condition' in the demo data 
+                         or something similar in your own data), and select all experimental variables to analyze dropout.", br(),
+                         "Make sure to click 'Update data!' to get started on analyses 
                          and visualization.", class="extraslimtext"),
-                       p("To read more about dropout as a relevant dependent variable in analysis of internet-based
+                      # "We recommend you use a device with a keyboard to conduct your analyses with dropR.", br(), 
+                          p("To read more about dropout as a relevant dependent variable in analysis of internet-based
                          experiments, we recommend",
-                         a("this paper by Reips (2002)", href = "https://www.uni-konstanz.de/iscience/reips/pubs/papers/Reips2002.pdf"), 
+                         a("this paper by Reips (2002)", href = "https://www.uni-konstanz.de/iscience/reips/pubs/papers/Reips2002.pdf", target = "_blank"), 
                          "as a starting point.", class="slimtext")
                        )
                    # ,textOutput("debug_txt")
@@ -70,14 +71,14 @@ tabUpload <- tabItem(tabName = "upload",
                              tags$li("If you are working with your own data, continue in steps 2-3:"),
                              tags$ul(
                                tags$li("2. Specify: Indicate whether the first line of your
-                                   data is a header and choose the proper column delimiter and
+                                   data contains headers and choose the proper delimiter and
                                    text quotes."),
                                tags$li("2.1 Missings: Make sure to use reasonable coding for
                                    missing values in your data. Note that empty cells are recognized as 
                                    missing values by default. Add custom missing values
                                    if necessary."),
-                               tags$li("3. Identify: Identify the column in your data which codes the experimental condition and
-                                       select all variables that hold data for the questions in your experiment for which to analyze 
+                               tags$li("3. Identify: Identify the column in your data that codes the experimental condition and
+                                       select all variables that hold data for the items in your experiment from which to analyze 
                                        dropout.")
                              ),
                              tags$li("Check the data preview below. If your
@@ -91,7 +92,7 @@ tabUpload <- tabItem(tabName = "upload",
                                               'text/comma-separated-values,text/plain', 
                                               '.csv')),
                            # h4("or use the default demo dataset (52 variables, 4 experimental conditions) instead"),
-                           checkboxInput("demo_ds",strong("Use demo data"), value = TRUE)
+                           checkboxInput("demo_ds", strong("Use demo data"), value = TRUE)
                        ),
                        box(width=2,
                            title = "2. Specify",
@@ -127,8 +128,9 @@ tabUpload <- tabItem(tabName = "upload",
                        box(width=3,
                            title = "3. Identify",
                            # h3("3. Identify"),
-                           # h5("conditions and questions to analyze"),
                            uiOutput('choose_condition'),
+                           # strong("Select questions"), br(),
+                           # em("Hold down Shift key to select multiple."),
                            uiOutput("choose_questions"),
                            actionButton("goButton", "Update data!")
                        )
@@ -157,32 +159,38 @@ tabViz <- tabItem(tabName = "viz",
                                checkboxInput("show_confbands","Show confidence bands"),
                                checkboxInput("linetypes","Use line type to distinguish conditions",
                                              value = T),
-                               checkboxInput("cutoff","Cut off last question",value = T),
+                               # checkboxInput("cutoff","Cut off last item",value = T),
                                checkboxInput("full_scale","Show full Y-axis (0 to 100)",value = F)
                                ),
                         
-                        column(width = 5,
+                        column(width = 4,
                                radioButtons("color_palette","Color palettes",
                                             c("color-blind friendly" = "color_blind",
                                               "ggplot default" = "default",
                                               "gray scale" = "gray"),
                                             "color_blind")
                                ),
-                        
-                        textInput("rename_conditions","Rename selected conditions (comma delimited)*"),
-                        selectInput("stroke_width","Stroke width",c(1,2,3,4,5),1),
-                       
-                        
-                        h4("Hints"),
-                        tags$ul(
-                          tags$li("Color-blind friendly palettes support up to 8 different conditions (colors)."),
-                          tags$li("* When renaming conditions, use a comma (,) as a seperator. Make sure to list 
-                                  as many names as conditions you have selected."),
-                          tags$li("With dropR you can produce graphs for publication in various formats. You may 
+                        column(width = 12,
+                               strong("Rename displayed conditions"), br(),
+                               em("When renaming conditions, use a comma as a separator. Make sure to list 
+                                 as many names as conditions you have selected (e.g. cond1, cond2,...)."),
+                               textInput("rename_conditions", NULL),
+                               
+                               selectInput("stroke_width","Stroke width",c(1,2,3,4,5),1)
+                               ),
+                        column(width = 12,
+                               h4("Hints"),
+                               tags$ul(
+                                 tags$li("Color-blind friendly palettes support up to 8 different conditions (colors)."),
+                                 # tags$li("* When renaming conditions, use a comma (,) as a seperator. Make sure to list 
+                                 #  as many names as conditions you have selected."),
+                                 tags$li("With dropR you can produce graphs for publication in various formats. You may 
                                   choose vector formats such as .svg and .pdf or the .png format for rendered pixels.")
-                        )),
+                                  )
+                               )
+                        ),
                     box(width = 8,
-                        title = "Dropout by question",
+                        title = "Dropout by item",
                         div(plotOutput("do_curve_plot"),
                             style = 'overflow:auto'),
                         
@@ -223,7 +231,7 @@ tabViz <- tabItem(tabName = "viz",
                                  icon = icon("gear"), 
                                  width = "180px",
                                  
-                                 tooltip = tooltipOptions(title = "Resolution, height & width can be adjusted",
+                                 tooltip = tooltipOptions(title = "Resolution, height and width can be adjusted",
                                                           placement = "left")
                                ),
                                
@@ -246,7 +254,7 @@ tabXsq <- tabItem(tabName = "xsq",
                         uiOutput("chisq_conditions"),
                         uiOutput("xsq_slider"),
                         checkboxInput("p_sim","Simulate p-values",T),
-                        h4("Dropout by question"),
+                        h4("Dropout by item"),
                         plotOutput("do_curve_plot_2"),
                         HTML('<em>This plot shows the same overview that was created in Visual Inspection.</em>')
                     ),
@@ -256,7 +264,8 @@ tabXsq <- tabItem(tabName = "xsq",
                         # h3("Contingency Test Outcomes"),
                         verbatimTextOutput("chisq_tests"),
                         h4("Odds ratio by item"),
-                        tableOutput("odds_ratio"),
+                        tableOutput("odds_ratio")
+                        # verbatimTextOutput("chisq_code")
                         # div(plotOutput("do_curve_plot_2"),
                         #     style = 'overflow:auto')
                         )
@@ -356,7 +365,7 @@ tabKS <- tabItem(tabName = "kolsmir",
                                 checkboxInput("ks_ci","Show confidence bands",T),
                                 checkboxInput("ks_linetypes","Use line type to distinguish conditions",
                                               value = T),
-                                checkboxInput("ks_ql","Show question marker line",T),
+                                checkboxInput("ks_ql","Show item marker line",T),
                          ),
                          column(width = 5,
                                 radioButtons("ks_color_palette","Color palettes",
@@ -492,23 +501,31 @@ tabAbout <- tabItem(tabName = "about",
                     h2("About"),
                     p("dropR is a joint project by Ulf-Dietrich Reips, Matthias Bannert and Annika Tave Overlander that 
                       followed naturally from the long-standing need in",
-                      a("Internet science", href = "https://iscience.uni-konstanz.de/"), 
+                      a("Internet science", href = "https://iscience.uni-konstanz.de/", target="_blank"), 
                       "and online research for methods and tools to address the fact that dropout (aka attrition, mortality, 
                       break-off) occurs much more frequently when research is conducted via the Internet than traditionally
                       in the lab.", class="slimtext"),
                     p("You can find the full documentation of the dropR package on",
-                      a("GitHub.", href = "https://iscience-kn.github.io/dropR/index.html"), class="slimtext")
+                      a("GitHub.", href = "https://iscience-kn.github.io/dropR/index.html", target="_blank"), class="slimtext"),
+                    br(),
+                    p( "In 2025, we published a paper in Behavior Research Methods that explains the methodology of dropout analysis in 
+                    more detail and also how to use the tool. You can find the full-text open access here: ",
+                       a("doi.org/10.3758/s13428-025-02730-2.", href = "https://doi.org/10.3758/s13428-025-02730-2", target="_blank"), class="slimtext"),
+                    p("Reips, U.-D., Overlander, A. T., & Bannert, M. (2025). Dropout analysis: A method for data from Internet-based 
+                    research and dropR, an R-based web app and package to analyze and visualize dropout.",
+                      em("Behavior Research Methods, 57"), "(8), 231. https://doi.org/10.3758/s13428-025-02730-2", class="slimtext"
                     )
+                   )
 
 # Main Page structure ####
-ui <- dashboardPage(
+ui <- dashboardPage(title = "dropR",
   
-  dashboardHeader(title = "dropR"),
+  dashboardHeader(title = tags$span(tags$img(src='decrease_white.svg', height = '30', width ='30'), "dropR")),
   dashboardSidebar(
     sidebarMenu(
       menuItem("Home", tabName = "home", icon = icon("home")),
       menuItem("Start: Upload", tabName = "upload", icon = icon("upload")),
-      menuItem("Visual inspection", tabName = "viz",
+      menuItem("Visual Inspection", tabName = "viz",
                icon = icon("area-chart",lib="font-awesome")),
       menuItem("Contingency Analyses", tabName = "xsq",
                icon = icon("percent",lib="font-awesome")),

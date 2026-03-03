@@ -89,12 +89,30 @@ server <- function(input, output) {
     ## Choose questions #########
   output$choose_questions <- renderUI({
     if(is.null(dataset())) return(NULL)
-    selectInput('quest_cols', 'Select questions',
-                selected = names(dataset())[c(3:length(names(dataset())))], # previously: -c(1,length(names(dataset())))
-                multiple=TRUE,
-                choices = names(dataset()),
-                selectize = FALSE,
-                size = 15)
+    # selectInput('quest_cols', label = NULL, #'Hold down Shift key to select multiple.',
+    #             selected = names(dataset())[c(3:length(names(dataset())))], # previously: -c(1,length(names(dataset())))
+    #             multiple=TRUE,
+    #             choices = names(dataset()),
+    #             selectize = FALSE,
+    #             size = 13)
+    
+    
+    # checkboxGroupInput('quest_cols', label = NULL,
+    #                    choices = names(dataset()),
+    #                    selected = names(dataset())[c(3:length(names(dataset())))]
+    #                    )
+    
+    pickerInput(
+      inputId = "quest_cols",
+      label = "Select items",
+      choices = names(dataset()),
+      selected = names(dataset())[c(3:length(names(dataset())))],
+      multiple = T,
+      options = list(`actions-box` = TRUE)
+    )
+    
+    
+    
   })
   
   ## show conditions ############
@@ -121,7 +139,7 @@ server <- function(input, output) {
       NULL
     } else{
       
-      # remove total from the list cause that's a seperate thing
+      # remove total from the list cause that's a separate thing
       # from the dropdown box... 
       cs <- levels(stats()[,get("condition")])
       cs <- cs[-match("total",cs)]
@@ -140,7 +158,7 @@ server <- function(input, output) {
       
       checkboxGroupInput('sel_cond_chisq', 'Compute test for selected conditions',
                          cs,
-                         selected = levels(stats()[,get("condition")]))  
+                         selected = input$sel_cond)# levels(stats()[,get("condition")]))  
     
   })
   
@@ -149,9 +167,9 @@ server <- function(input, output) {
 
   ## Chisq slider ############  
   output$xsq_slider <- renderUI({
-    sliderInput('chisq_question', "Select question",
-                1, length(input$quest_cols)-1,
-                value = length(input$quest_cols)-1, step = 1)
+    sliderInput('chisq_question', "Select item",
+                1, length(input$quest_cols), # previously length - 1
+                value = length(input$quest_cols), step = 1)
   })
   
   ## Log RANK ###############
@@ -175,10 +193,10 @@ server <- function(input, output) {
     
    
     d <- as.data.frame(stats())
-    if(input$cutoff){
-      last_q <- length(input$quest_cols)
-      d <- subset(d, q_idx != last_q)
-    }
+    # if(input$cutoff){
+    #   last_q <- length(input$quest_cols)
+    #   d <- subset(d, q_idx != last_q)
+    # }
     
     d$condition <- factor(d$condition)
     d <- d[d$condition %in% react_cond_col(),]
@@ -227,7 +245,7 @@ server <- function(input, output) {
 # KS TAB #######
   ## KS slider ############  
   output$ks_slider <- renderUI({
-    sliderInput('ks_question', "Select question",
+    sliderInput('ks_question', "Select item",
                 1, length(input$quest_cols),
                 value = length(input$quest_cols),
                 step = 1)
@@ -327,10 +345,15 @@ server <- function(input, output) {
 ####################################################  
   
   # Preview data Table ####
+  # Should show full data if no item selection, otherwise show data of selected items
   output$table <- renderDataTable(datatable({
     if(is.null(input$file1) & !input$demo_ds) return(NULL)
     else{
-      dataset()
+      if(is.null(input$cond_col) | input$cond_col == "None" | is.null(input$quest_cols)){
+        dataset()
+      } else{
+        dataset()[, c(input$cond_col, input$quest_cols)]
+      }
     }
   }
   ))
@@ -354,6 +377,7 @@ server <- function(input, output) {
              chisq_question = input$chisq_question,
              sel_cond_chisq = input$sel_cond_chisq,
              p_sim = input$p_sim)
+ 
   })
   
   output$odds_ratio <- renderTable({
@@ -361,6 +385,13 @@ server <- function(input, output) {
     do_or_table(stats(), chisq_question = input$chisq_question, sel_cond_chisq = input$sel_cond_chisq)
   },
   rownames = TRUE)
+  
+  output$chisq_code <- renderPrint({
+    paste0("do_chisq(d, chisq_question = ", paste(input$chisq_question), ", ",
+           "sel_cond_chisq = ", paste0("c(", paste(input$sel_cond_chisq, collapse = ", "), ")"), ", ",
+           "p_sim = ", paste(input$p_sim), ")"
+    )
+  })
   
   
   output$surv_tests <- renderPrint({
